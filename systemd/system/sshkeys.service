@@ -27,6 +27,9 @@ ConditionKernelCommandLine=|coreos.oem.id=openstack
 ConditionKernelCommandLine=|ignition.platform.id=hetzner
 ConditionKernelCommandLine=|flatcar.oem.id=hetzner
 
+ConditionKernelCommandLine=|ignition.platform.id=akamai
+ConditionKernelCommandLine=|flatcar.oem.id=akamai
+
 [Service]
 Type=oneshot
 RemainAfterExit=yes
