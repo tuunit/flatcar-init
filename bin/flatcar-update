@@ -191,7 +191,10 @@ mkdir -p "/var/tmp/flatcar-update"
 if [ "$PAYLOAD" = "" ]; then
   echo "Downloading update payloads..."
   PAYLOAD="/var/tmp/flatcar-update/flatcar_production_update.gz"
+  # bash 4.3 compat for VAR[@] if VAR is ()
+  set +u
   for DOWNLOAD_FILE in "$PAYLOAD" "${EXTENSIONS[@]}"; do
+    set -u
     rm -f "${DOWNLOAD_FILE}"
     BASEFILENAME="$(basename -- "${DOWNLOAD_FILE}")"
     curl -fsSL -o "${DOWNLOAD_FILE}" --retry-delay 1 --retry 60 --retry-connrefused --retry-max-time 60 --connect-timeout 20 "https://update.release.flatcar-linux.net/${BOARD}/${VERSION}/${BASEFILENAME}"
@@ -204,9 +207,13 @@ if [ "$PAYLOAD" = "" ]; then
       echo "Error: mismatch with downloaded SHA256 checksum (${SHA256_TO_CHECK})" > /dev/stderr ; exit 1
     fi
   done
+  set -u
   echo "When restarting after an error you may reuse them with '--to-payload $PAYLOAD --extension ${EXTENSIONS[*]}' (add --extension before each extension)"
 else
+  # bash 4.3 compat for VAR[@] if VAR is ()
+  set +u
   for DOWNLOAD_FILE in "$PAYLOAD" "${EXTENSIONS[@]}"; do
+    set -u
     BASEFILENAME="$(basename -- "${DOWNLOAD_FILE}" | sed 's/flatcar_test_update-//g')"
     if [ "${DOWNLOAD_FILE}" = "${PAYLOAD}" ]; then
       BASEFILENAME="flatcar_production_update.gz"
@@ -216,6 +223,7 @@ else
       ln -fs "$(readlink -f "${DOWNLOAD_FILE}")" "/var/tmp/flatcar-update/${BASEFILENAME}"
     fi
   done
+  set -u
 fi
 
 BASE="http://localhost:${LISTEN_PORT_2}/"
@@ -229,7 +237,10 @@ tee /tmp/response > /dev/null <<-EOF
 EOF
 
 
+# bash 4.3 compat for VAR[@] if VAR is ()
+set +u
 for DOWNLOAD_FILE in "$PAYLOAD" "${EXTENSIONS[@]}"; do
+  set -u
   HASH=$(openssl dgst -binary -sha1 < "${DOWNLOAD_FILE}" | base64)
   SIZE=$(stat -L --printf='%s\n' "${DOWNLOAD_FILE}")
   BASEFILENAME="$(basename -- "${DOWNLOAD_FILE}" | sed 's/flatcar_test_update-//g')"
@@ -247,6 +258,7 @@ for DOWNLOAD_FILE in "$PAYLOAD" "${EXTENSIONS[@]}"; do
 	<package name="${BASEFILENAME}" hash="${HASH}" ${OPTHASH256} size="${SIZE}" required="${REQUIRED}"></package>
 EOF
 done
+set -u
 
 SHA256=$(openssl dgst -binary -sha256 < "$PAYLOAD" | base64)
 tee -a /tmp/response > /dev/null <<-EOF
