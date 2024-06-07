@@ -5,7 +5,7 @@ set -e
 print_issue() {
     echo
     echo 'This is \n (\s \m \r) \t'
-    for note in /run/issue.d/*; do
+    for note in /run/issue.d/* /etc/issue.d/* ; do
         [ -f "${note}" ] && cat "${note}"
     done
     echo
