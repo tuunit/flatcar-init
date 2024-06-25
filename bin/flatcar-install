@@ -127,7 +127,6 @@ Flatcar Container Linux on a machine then use this tool to make a permanent inst
 # sub   rsa4096/FCBEAB91 2020-08-28 [S] [expires: 2021-08-28]
 # sub   rsa4096/250D4A42 2021-08-10 [S] [expires: 2022-08-10]
 # sub   rsa4096/267EC954 2022-08-11 [S] [expires: 2023-08-11]
-GPG_LONG_ID="E25D9AED0593B34A"
 GPG_KEY="-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQINBFqUFawBEACdnSVBBSx3negnGv7Ppf2D6fbIQAHSzUQ+BA5zEG02BS6EKbJh
@@ -686,7 +685,7 @@ function download_from_url(){
         exit 1
     fi
 
-    if ! gpg --batch --trusted-key "${GPG_LONG_ID}" --verify "${WORKDIR}/${SIG_NAME}" "${PWD}/${IMAGE_NAME}"; then
+    if ! gpg --batch --verify "${WORKDIR}/${SIG_NAME}" "${PWD}/${IMAGE_NAME}"; then
         echo "Could not verify ${IMAGE_NAME}." >&2
         exit 1
     fi
@@ -697,8 +696,7 @@ function install_from_url() {
     echo "Downloading, writing and verifying ${IMAGE_NAME}..."
     if ! wget ${WGET_ARGS} --no-verbose -O - "${IMAGE_URL}" \
         | tee >(${BZIP_UTIL} -cd >&3) \
-        | gpg --batch --trusted-key "${GPG_LONG_ID}" \
-            --verify "${WORKDIR}/${SIG_NAME}" -
+        | gpg --batch --verify "${WORKDIR}/${SIG_NAME}" -
     then
         local EEND=( "${PIPESTATUS[@]}" )
         [ ${EEND[0]} -ne 0 ] && echo "${EEND[0]}: Download of ${IMAGE_NAME} did not complete" >&2
