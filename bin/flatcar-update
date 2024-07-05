@@ -267,12 +267,36 @@ tee -a /tmp/response > /dev/null <<-EOF
 	</updatecheck><event status="ok"></event></app></response>
 EOF
 
+# Cleanups for local socat servers below
+
 true > /tmp/payload-server-pids
-trap "umount /usr/share/update_engine/update-payload-key.pub.pem 2> /dev/null || true; rm -f /tmp/response /tmp/payload-server ; cat /tmp/payload-server-pids | xargs -r kill ; rm -f /tmp/payload-server-pids" EXIT INT
-ncat --keep-open -c "echo -en 'HTTP/1.1 200 OK\ncontent-type: text/xml\ncontent-length: $(stat --printf='%s\n' /tmp/response)\n\n'; cat /tmp/response" -l "$LISTEN_PORT_1" &
+trap "umount /usr/share/update_engine/update-payload-key.pub.pem 2> /dev/null || true ; cat /tmp/payload-server-pids | xargs -r kill ; rm -f /tmp/response /tmp/payload-server /tmp/response-server /tmp/payload-server-pids" EXIT INT
+
+
+# Setup for XML response server
+
+# Helper script because inline quoting is insane
+tee /tmp/response-server > /dev/null <<'EOF'
+#!/bin/bash
+set -euo pipefail
+read -a WORDS
+if [[ ${#WORDS[@]} -ne 3 ]] || [[ ${WORDS[0]} != POST ]] || [[ ${WORDS[1]} != /update ]] ; then
+  echo -ne "HTTP/1.1 400 Bad request\r\n\r\n"; exit 0
+fi
+echo -ne "HTTP/1.1 200 OK\r\n"
+echo -ne "Content-Type: text/xml\r\n"
+LEN=$(stat --printf='%s\n' /tmp/response)
+echo -ne "Content-Length: ${LEN}\r\n"
+echo -ne "\r\n"
+cat /tmp/response
+EOF
+
+chmod +x /tmp/response-server
+socat TCP-LISTEN:"${LISTEN_PORT_1}",reuseaddr,fork SYSTEM:'/tmp/response-server' &
 CHILDPID="$!"
 echo "${CHILDPID}" >> /tmp/payload-server-pids
 
+# Setup for payload server
 
 # Helper script because inline quoting is insane
 tee /tmp/payload-server > /dev/null <<'EOF'
