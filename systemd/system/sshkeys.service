@@ -30,6 +30,9 @@ ConditionKernelCommandLine=|flatcar.oem.id=hetzner
 ConditionKernelCommandLine=|ignition.platform.id=akamai
 ConditionKernelCommandLine=|flatcar.oem.id=akamai
 
+ConditionKernelCommandLine=|ignition.platform.id=proxmoxve
+ConditionKernelCommandLine=|flatcar.oem.id=proxmoxve
+
 [Service]
 Type=oneshot
 RemainAfterExit=yes
